@@ -5,17 +5,22 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
+	"log"
 	"github.com/dgrijalva/jwt-go"
 
 	_ "github.com/lib/pq"
+	"github.com/joho/godotenv"
+    "os"
 )
 
+func init() {
+    if err := godotenv.Load(); err != nil {
+        log.Fatal("Error loading .env file")
+    }
+}
+
 // RESTAPI
-const (
-	secretKey = "super-secret-key"
-	apiKey    = "12345"
-)
+ 
 
 // Home is a handler function that writes "super secret area" to the ResponseWriter
 func Home(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +34,7 @@ func CreateJWT() (string, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(time.Hour).Unix()
 
-	tokenStr, err := token.SignedString([]byte(secretKey))
+	tokenStr, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
 	if err != nil {
 		return "", err
 	}
@@ -55,7 +60,7 @@ func ValidateJWT(next http.Handler) http.Handler {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
-			return []byte(secretKey), nil
+			return []byte(os.Getenv("SECRET_KEY")), nil
 		})
 
 		if err != nil {
@@ -73,6 +78,7 @@ func ValidateJWT(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+var apiKey = os.Getenv("API_KEY")
 
 // GetJWT is a handler function that generates a JWT token and returns it in the ResponseWriter
 func GetJWT(w http.ResponseWriter, r *http.Request) {
@@ -96,37 +102,20 @@ func GetJWT(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+		// DATABASE
 	fmt.Println("opening database...")
-	// DATABASE
-	db, err := sql.Open("postgres", "postgres://postgres:Postgres_94@localhost/infinity?sslmode=disable")
+	db, err := connectdb()
 
 	fmt.Println("db", db)
 	if err != nil {
-		fmt.Println("error...")
-		panic(err)
+		fmt.Printf("failed to connect to database: %v\n", err)
+		return
 	}
 	defer db.Close()
-// Postgres_94
-	rows, err := db.Query("SELECT * FROM partners")
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
+	 
 
-	for rows.Next() {
-		var id int
-		var name, email, phoneNumber, billingAddress string
-		var createdAt, updatedAt time.Time
-	
-		err := rows.Scan(&id, &name, &email, &phoneNumber, &billingAddress, &createdAt, &updatedAt)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("id: %d, name: %s, email: %s, phone number: %s, billing address: %s, created at: %s, updated at: %s\n", 
-			id, name, email, phoneNumber, billingAddress, createdAt.Format(time.RFC3339), updatedAt.Format(time.RFC3339))
-	}
+		// REST API
 
-	fmt.Println("opening api...")
 	// Use http.NewServeMux() to create a new ServeMux and register handlers
 	mux := http.NewServeMux()
 	mux.Handle("/api", ValidateJWT(http.HandlerFunc(Home)))
@@ -139,3 +128,18 @@ func main() {
 }
 	
  
+func connectdb() (*sql.DB, error) {
+	// Open a connection to the database
+	db, err := sql.Open("postgres", os.Getenv("DB_CONN_STR"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database connection: %v", err)
+	}
+
+	// Ping the database to verify that the connection is working
+	if err := db.Ping(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to ping database: %v", err)
+	}
+
+	return db, nil
+}
