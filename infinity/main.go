@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
@@ -105,13 +104,12 @@ func main() {
 		// DATABASE
 	fmt.Println("opening database...")
 	db, err := connectdb()
-
 	fmt.Println("db", db)
 	if err != nil {
 		fmt.Printf("failed to connect to database: %v\n", err)
 		return
 	}
-	defer db.Close()
+	defer db.Close() 
 	 
 
 		// REST API
@@ -126,20 +124,7 @@ func main() {
 		fmt.Printf("Error starting server: %v\n", err)
 	}
 }
-	
+
+
  
-func connectdb() (*sql.DB, error) {
-	// Open a connection to the database
-	db, err := sql.Open("postgres", os.Getenv("DB_CONN_STR"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database connection: %v", err)
-	}
-
-	// Ping the database to verify that the connection is working
-	if err := db.Ping(); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to ping database: %v", err)
-	}
-
-	return db, nil
-}
+ 
