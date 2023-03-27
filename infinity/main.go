@@ -1,13 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+
+	_ "github.com/lib/pq"
 )
 
+// RESTAPI
 const (
 	secretKey = "super-secret-key"
 	apiKey    = "12345"
@@ -92,6 +96,37 @@ func GetJWT(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	fmt.Println("opening database...")
+	// DATABASE
+	db, err := sql.Open("postgres", "postgres://postgres:Postgres_94@localhost/infinity?sslmode=disable")
+
+	fmt.Println("db", db)
+	if err != nil {
+		fmt.Println("error...")
+		panic(err)
+	}
+	defer db.Close()
+// Postgres_94
+	rows, err := db.Query("SELECT * FROM partners")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var name, email, phoneNumber, billingAddress string
+		var createdAt, updatedAt time.Time
+	
+		err := rows.Scan(&id, &name, &email, &phoneNumber, &billingAddress, &createdAt, &updatedAt)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("id: %d, name: %s, email: %s, phone number: %s, billing address: %s, created at: %s, updated at: %s\n", 
+			id, name, email, phoneNumber, billingAddress, createdAt.Format(time.RFC3339), updatedAt.Format(time.RFC3339))
+	}
+
+	fmt.Println("opening api...")
 	// Use http.NewServeMux() to create a new ServeMux and register handlers
 	mux := http.NewServeMux()
 	mux.Handle("/api", ValidateJWT(http.HandlerFunc(Home)))
@@ -102,3 +137,5 @@ func main() {
 		fmt.Printf("Error starting server: %v\n", err)
 	}
 }
+	
+ 
