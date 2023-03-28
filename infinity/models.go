@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 )
+
+
   type Partner struct {
 	  ID             int       `json:"id"`
 	  Name           string    `json:"name"`
