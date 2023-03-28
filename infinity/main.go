@@ -1,15 +1,18 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"net/http"
-	"time"
 	"log"
-	"github.com/dgrijalva/jwt-go"
+	"net/http"
+	"os"
+	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
+
 	"github.com/joho/godotenv"
-    "os"
+	_ "github.com/lib/pq"
 )
 
 func init() {
@@ -104,27 +107,65 @@ func main() {
 		// DATABASE
 	fmt.Println("opening database...")
 	db, err := connectdb()
-	fmt.Println("db", db)
 	if err != nil {
 		fmt.Printf("failed to connect to database: %v\n", err)
 		return
 	}
 	defer db.Close() 
 	 
+	router := mux.NewRouter()
 
-		// REST API
+	router.HandleFunc("/api/partners", getAllPartnersHandler).Methods("GET")
+
 
 	// Use http.NewServeMux() to create a new ServeMux and register handlers
-	mux := http.NewServeMux()
-	mux.Handle("/api", ValidateJWT(http.HandlerFunc(Home)))
-	mux.HandleFunc("/jwt", GetJWT)
+	router.Handle("/api", ValidateJWT(http.HandlerFunc(Home)))
+	router.HandleFunc("/jwt", GetJWT)
 
 	// Use http.ListenAndServe() to start the server on port 8080
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	if err := http.ListenAndServe(":8080", router); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
 	}
 }
 
 
  
- 
+func getAllPartnersHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("geting all partners")
+	// Create a new database connection
+	db, err := connectdb()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Error connecting to database: %v", err)
+		return
+	}
+	defer db.Close()
+
+	// Query the partners table
+	rows, err := db.Query("SELECT * FROM partners")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Error querying database: %v", err)
+		return
+	}
+	defer rows.Close()
+
+	// Build an array of Partner objects
+	partners := []Partner{}
+	for rows.Next() {
+		var partner Partner
+		err := rows.Scan(&partner.ID, &partner.Name, &partner.Email, &partner.PhoneNumber, &partner.BillingAddress, &partner.CreatedAt, &partner.UpdatedAt)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "Error scanning row: %v", err)
+			return
+		}
+		partners = append(partners, partner)
+	}
+
+	// Encode the array of Partner objects in JSON format and write it to the response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(partners)
+	fmt.Print(partners)
+}
+

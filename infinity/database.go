@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
 	"os"
+	"time"
 )
-
 
 // Database Connection
 func connectdb() (*sql.DB, error) {
@@ -20,6 +20,23 @@ func connectdb() (*sql.DB, error) {
 		db.Close()
 		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
+	rows, err := db.Query("SELECT * FROM partners")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
 
+	for rows.Next() {
+		var id int
+		var name, email, phoneNumber, billingAddress string
+		var createdAt, updatedAt time.Time
+	
+		err := rows.Scan(&id, &name, &email, &phoneNumber, &billingAddress, &createdAt, &updatedAt)
+		if err != nil {
+			panic(err)
+		}
+		// fmt.Printf("id: %d, name: %s, email: %s, phone number: %s, billing address: %s, created at: %s, updated at: %s\n", 
+		// 	id, name, email, phoneNumber, billingAddress, createdAt.Format(time.RFC3339), updatedAt.Format(time.RFC3339))
+	}
 	return db, nil
 }
