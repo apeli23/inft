@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"database/sql"
@@ -8,7 +8,7 @@ import (
 )
 
 // Database Connection
-func connectdb() (*sql.DB, error) {
+func Connectdb() (*sql.DB, error) {
 	// Open a connection to the database
 	db, err := sql.Open("postgres", os.Getenv("DB_CONN_STR"))
 	if err != nil {
