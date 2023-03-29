@@ -25,7 +25,7 @@ func getAllPartnersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-
+	fmt.Print(db)
 	// Query the partners table
 	rows, err := db.Query("SELECT id, name, email, phone_number, billing_address, created_at, updated_at FROM partners")
 	if err != nil {
@@ -231,11 +231,11 @@ func PartnersRouter() * mux.Router {
 	router  := mux.NewRouter()
 
 	// endpoints for partners
-	router.HandleFunc("/api/partners", getAllPartnersHandler).Methods("GET")
-	router.HandleFunc("/api/partners", createPartner).Methods("POST")
-	router.HandleFunc("/api/partners/{id}", getPartner).Methods("GET")
-	router.HandleFunc("/api/partners/{id}", updatePartner).Methods("PUT")
-	router.HandleFunc("/api/partners/{id}", deletePartner).Methods("DELETE")
+	router.HandleFunc("/partners", getAllPartnersHandler).Methods("GET")
+	router.HandleFunc("/partners", createPartner).Methods("POST")
+	router.HandleFunc("/partners/{id}", getPartner).Methods("GET")
+	router.HandleFunc("/partners/{id}", updatePartner).Methods("PUT")
+	router.HandleFunc("/partners/{id}", deletePartner).Methods("DELETE")
 
 	return router
 }

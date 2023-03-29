@@ -24,6 +24,7 @@ func main() {
 // Use http.NewServeMux() to create a new ServeMux and register handlers
 	router.Handle("/api", handlers.ValidateJWT(http.HandlerFunc(handlers.Home)))
 	router.HandleFunc("/jwt", handlers.GetJWT)
+	router.PathPrefix("/partners").Handler(handlers.PartnersRouter())
 
 // Use http.ListenAndServe() to start the server on port 8080
 	if err := http.ListenAndServe(":8080", router); err != nil {
