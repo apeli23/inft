@@ -25,7 +25,6 @@ func getAllPartnersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-	fmt.Print(db)
 	// Query the partners table
 	rows, err := db.Query("SELECT id, name, email, phone_number, billing_address, created_at, updated_at FROM partners")
 	if err != nil {
@@ -50,6 +49,48 @@ func getAllPartnersHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(partners); err != nil {
 		http.Error(w, fmt.Sprintf("Error encoding JSON: %v", err), http.StatusInternalServerError)
 		return
+	}
+}
+
+
+//find a partner
+func getPartner(w http.ResponseWriter, r *http.Request) {
+	// Set response header
+	w.Header().Set("Content-Type", "application/json")
+
+	// Parse partner ID from request URL
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	// Get database connection from the pool
+	db, err := database.Connectdb()
+
+	// Create a context with a timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Prepare SQL statement
+	stmt, err := db.PrepareContext(ctx, "SELECT id, name, email, phone_number, billing_address, created_at, updated_at FROM partners WHERE id=$1")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error preparing statement: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	// Execute SQL query with the prepared statement
+	row := stmt.QueryRowContext(ctx, id)
+
+	// Scan the row into a Partner object
+	var partner models.Partner
+	err = row.Scan(&partner.ID, &partner.Name, &partner.Email, &partner.PhoneNumber, &partner.BillingAddress, &partner.CreatedAt, &partner.UpdatedAt)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error scanning row: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Encode the Partner object in JSON format and write it to the response
+	if err := json.NewEncoder(w).Encode(partner); err != nil {
+		http.Error(w, fmt.Sprintf("Error encoding JSON: %v", err), http.StatusInternalServerError)
 	}
 }
 
@@ -92,47 +133,6 @@ func createPartner(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]int{"id": id})
-}
-
-//find a partner
-func getPartner(w http.ResponseWriter, r *http.Request) {
-	// Set response header
-	w.Header().Set("Content-Type", "application/json")
-
-	// Parse partner ID from request URL
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	// Get database connection from the pool
-	db, err := database.Connectdb()
-
-	// Create a context with a timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// Prepare SQL statement
-	stmt, err := db.PrepareContext(ctx, "SELECT id, name, email, phone_number, billing_address, created_at, updated_at FROM partners WHERE id=$1")
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error preparing statement: %v", err), http.StatusInternalServerError)
-		return
-	}
-	defer stmt.Close()
-
-	// Execute SQL query with the prepared statement
-	row := stmt.QueryRowContext(ctx, id)
-
-	// Scan the row into a Partner object
-	var partner models.Partner
-	err = row.Scan(&partner.ID, &partner.Name, &partner.Email, &partner.PhoneNumber, &partner.BillingAddress, &partner.CreatedAt, &partner.UpdatedAt)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error scanning row: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Encode the Partner object in JSON format and write it to the response
-	if err := json.NewEncoder(w).Encode(partner); err != nil {
-		http.Error(w, fmt.Sprintf("Error encoding JSON: %v", err), http.StatusInternalServerError)
-	}
 }
 
 // update a partner

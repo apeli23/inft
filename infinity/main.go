@@ -25,6 +25,7 @@ func main() {
 	router.Handle("/api", handlers.ValidateJWT(http.HandlerFunc(handlers.Home)))
 	router.HandleFunc("/jwt", handlers.GetJWT)
 	router.PathPrefix("/partners").Handler(handlers.PartnersRouter())
+	router.PathPrefix("/subscriptions").Handler(handlers.SubscriptionsRouter())
 
 // Use http.ListenAndServe() to start the server on port 8080
 	if err := http.ListenAndServe(":8080", router); err != nil {

@@ -4,7 +4,7 @@ import(
 	"time"
 )
 
-type Subscription struct {
+type Subscriptions struct {
 	ID               int       `json:"id"`
 	PartnerID        int       `json:"partner_id"`
 	CustomerMSISDN   string    `json:"customer_msisdn"`
