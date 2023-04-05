@@ -6,19 +6,18 @@ import (
 	"net/http"
 	"infinity/handlers"
 	"github.com/gorilla/mux"
-
 	"github.com/joho/godotenv"
+	
 	_ "github.com/lib/pq"
 )
 
-func init() {
-    if err := godotenv.Load(); err != nil {
-        log.Fatal("Error loading .env file")
-    }
-}
  
 func main() {
-	 
+
+	if err := godotenv.Load(); err != nil {
+        log.Fatal("Error loading .env file")
+    }
+	
 	router := mux.NewRouter()
 
 // Use http.NewServeMux() to create a new ServeMux and register handlers
@@ -26,6 +25,7 @@ func main() {
 	router.HandleFunc("/jwt", handlers.GetJWT)
 	router.PathPrefix("/partners").Handler(handlers.PartnersRouter())
 	router.PathPrefix("/subscriptions").Handler(handlers.SubscriptionsRouter())
+	router.PathPrefix("/transactions").Handler(handlers.TransactionsRouter())
 
 // Use http.ListenAndServe() to start the server on port 8080
 	if err := http.ListenAndServe(":8080", router); err != nil {

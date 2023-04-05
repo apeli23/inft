@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"time"
-	"context"
 	"infinity/database"
 	"infinity/models"
 	"net/http"
+	"time"
+
 	"github.com/gorilla/mux"
 )
 
@@ -42,7 +43,7 @@ func getAllSubscriptionsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		subscriptions = append(subscriptions, subscription)
-	}
+	} 
 
 	// Encode the array of Partner objects in JSON format and write it to the response
 	if err := json.NewEncoder(w).Encode(subscriptions); err != nil {
@@ -118,7 +119,7 @@ func createSubscription(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// Insert the new subscription into the subscriptions table
-	sqlStatement := `INSERT INTO subscriptions (id,partner_id, customer_msisdn, subscription_date, status, billing_amount, billing_cycle, start_date, end_date, created_at, updated_at)
+	sqlStatement := `INSERT INTO subscriptions (partner_id, customer_msisdn, subscription_date, status, billing_amount, billing_cycle, start_date, end_date, created_at, updated_at)
 					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 					RETURNING id`
 	var id int

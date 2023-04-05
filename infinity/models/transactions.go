@@ -5,7 +5,7 @@ import(
 )
 
 
-type Transaction struct {
+type Transactions struct {
 	ID              int       `json:"id"`
 	SubscriptionID  int       `json:"subscription_id"`
 	TransactionDate time.Time `json:"transaction_date"`
